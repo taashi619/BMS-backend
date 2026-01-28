@@ -12,3 +12,11 @@ exports.getAvailableBicycles = async (req, res) => {
     });
   }
 };
+exports.createBicycle = async (req, res) => {
+  try {
+    const bicycle = await bicycleService.createBicycle(req.user, req.body);
+    res.status(201).json({ success: true, bicycle });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
