@@ -9,16 +9,63 @@ exports.getAvailableBicycles = async () => {
   });
 };
 
-exports.getAllBicycles = async (user) => {
+function adminOnly(user) {
   if (user.role !== "ADMIN") {
-    const error = new Error("Access denied");
+    const error = new Error("Admin access only");
     error.status = 403;
     throw error;
   }
+}
+
+exports.createBicycle = async (user, data) => {
+  adminOnly(user);
+
+  return prisma.bicycle.create({
+    data: {
+      bicycleNumber: data.bicycleNumber,
+    },
+  });
+};
+
+exports.getAllBicycles = async (user) => {
+  adminOnly(user);
 
   return prisma.bicycle.findMany({
-    include: {
-      booking: true, // optional: see who booked it
+    include:{bookings: true},
+    orderBy: { id: "desc" },
+  });
+};
+
+exports.updateBicycle = async (user, id, data) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      bicycleNumber: data.bicycleNumber,
+      lastMaintenanceDate: data.lastMaintenanceDate,
+    },
+  });
+};
+
+exports.updateBicycleStatus = async (user, id, status) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      status,
+    },
+  });
+};
+
+exports.deactivateBicycle = async (user, id) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      isActive: false,
     },
   });
 };

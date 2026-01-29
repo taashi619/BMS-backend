@@ -87,6 +87,11 @@ exports.approveReturn = async (user, bookingId) => {
         },
     });
 
+    await prisma.bicycle.update({
+        where: { id: booking.bicycleId },
+        data: { status: "AVAILABLE" },
+    });
+
     await prisma.student.update({
         where: { userId: booking.userId },
         data: {
