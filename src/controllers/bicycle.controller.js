@@ -20,3 +20,50 @@ exports.createBicycle = async (req, res) => {
     res.status(err.status || 500).json({ message: err.message });
   }
 };
+
+exports.getAllBicycles = async (req, res) => {
+  try {
+    const bicycles = await bicycleService.getAllBicycles(req.user);
+    res.json(bicycles);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
+
+exports.updateBicycle = async (req, res) => {
+  try {
+    const bicycle = await bicycleService.updateBicycle(
+      req.user,
+      req.params.id,
+      req.body
+    );
+    res.json(bicycle);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
+
+exports.updateBicycleStatus = async (req, res) => {
+  try {
+    const bicycle = await bicycleService.updateBicycleStatus(
+      req.user,
+      req.params.id,
+      req.body.status
+    );
+    res.json(bicycle);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
+
+exports.deactivateBicycle = async (req, res) => {
+  try {
+    const bicycle = await bicycleService.deactivateBicycle(
+      req.user,
+      req.params.id
+    );
+    res.json(bicycle);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};

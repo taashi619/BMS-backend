@@ -94,7 +94,7 @@ exports.getAllBookings = async (user, filters = {}) => {
 
     adminOnly(user);
 
-    const { bicycleId, studentName, studentEmail, status } = filters;
+    const { bicycleId, studentName, studentEmail, status,bicycleNum } = filters;
 
     return prisma.booking.findMany({
         where: {
@@ -109,10 +109,13 @@ exports.getAllBookings = async (user, filters = {}) => {
                     ],
                 }),
             },
+            bicycle:{
+                ...(bicycleNum && {bicycleNumber:{contains:bicycleNum, mode: 'insensitive' }})
+            }
         },
         include: {
-            user: true,     // includes firstName, lastName, email
-            bicycle: true,  // includes bicycle details
+            user: true,     
+            bicycle: true,  
         },
         orderBy: {
             createdAt: 'desc',

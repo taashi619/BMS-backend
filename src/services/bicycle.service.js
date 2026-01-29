@@ -9,63 +9,63 @@ exports.getAvailableBicycles = async () => {
   });
 };
 
-exports.getAllBicycles = async (req, res) => {
-  try {
-    const bicycles = await bicycleService.getAllBicycles(req.user);
-    res.json(bicycles);
-  } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
-  }
-};
-
-exports.getAllBicycles = async (user) => {
+function adminOnly(user) {
   if (user.role !== "ADMIN") {
-    const error = new Error("Access denied");
+    const error = new Error("Admin access only");
     error.status = 403;
     throw error;
   }
+}
 
-  return prisma.bicycle.findMany({
-    include: {
-      booking: true, // optional: see who booked it
+exports.createBicycle = async (user, data) => {
+  adminOnly(user);
+
+  return prisma.bicycle.create({
+    data: {
+      bicycleNumber: data.bicycleNumber,
     },
   });
 };
 
-exports.updateBicycle = async (req, res) => {
-  try {
-    const bicycle = await bicycleService.updateBicycle(
-      req.user,
-      req.params.id,
-      req.body
-    );
-    res.json(bicycle);
-  } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
-  }
+exports.getAllBicycles = async (user) => {
+  adminOnly(user);
+
+  return prisma.bicycle.findMany({
+    include:{bookings: true},
+    orderBy: { id: "desc" },
+  });
 };
 
-exports.updateBicycleStatus = async (req, res) => {
-  try {
-    const bicycle = await bicycleService.updateBicycleStatus(
-      req.user,
-      req.params.id,
-      req.body.status
-    );
-    res.json(bicycle);
-  } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
-  }
+exports.updateBicycle = async (user, id, data) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      bicycleNumber: data.bicycleNumber,
+      lastMaintenanceDate: data.lastMaintenanceDate,
+    },
+  });
 };
 
-exports.deactivateBicycle = async (req, res) => {
-  try {
-    const bicycle = await bicycleService.deactivateBicycle(
-      req.user,
-      req.params.id
-    );
-    res.json(bicycle);
-  } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
-  }
+exports.updateBicycleStatus = async (user, id, status) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      status,
+    },
+  });
+};
+
+exports.deactivateBicycle = async (user, id) => {
+  adminOnly(user);
+
+  return prisma.bicycle.update({
+    where: { id: Number(id) },
+    data: {
+      isActive: false,
+    },
+  });
 };
