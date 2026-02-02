@@ -47,3 +47,24 @@ exports.getQueue = async (req, res) => {
     res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };
+
+exports.changeMaintenanceStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const updatedMaintenance =
+      await maintenanceService.updateMaintenanceStatus(
+        req.user,
+        id,
+        status
+      );
+
+    res.status(200).json({
+      message: 'Maintenance status updated successfully',
+      data: updatedMaintenance,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
