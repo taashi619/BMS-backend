@@ -4,9 +4,15 @@ const auth = require("../middleware/authMiddleware");
 const router = express.Router();
 const upload = require("../middleware/upload");
 // POST /maintenance/report
-router.post('/report', auth,upload.single("photo"), maintenanceController.reportIssue);
+router.post('/report', auth, upload.single("photo"), maintenanceController.reportIssue);
 
 // GET /maintenance/queue (admin view)
 router.get('/queue', auth, maintenanceController.getQueue);
+router.patch(
+    '/:id/status',
+    auth,
+    maintenanceController.changeMaintenanceStatus
+);
+
 
 module.exports = router;

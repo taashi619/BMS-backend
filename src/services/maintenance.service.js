@@ -43,9 +43,41 @@ exports.getMaintenanceQueue = async (adminUser) => {
     throw error;
   }
 
-  return prisma.maintenanceIssue.findMany({
-    where: { status: 'PENDING' },
+  return prisma.maintenance.findMany({
     include: { user: true, bicycle: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { reportedDate: 'desc' },
+  });
+};
+
+exports.updateMaintenanceStatus = async (
+  adminUser,
+  maintenanceId,
+  newStatus
+) => {
+
+  if (adminUser.role !== 'ADMIN') {
+    const error = new Error('Access denied');
+    error.status = 403;
+    throw error;
+  }
+
+  const maintenance = await prisma.maintenance.findUnique({
+    where: { id: Number(maintenanceId) },
+  });
+
+  if (!maintenance) {
+    const error = new Error('Maintenance record not found');
+    error.status = 404;
+    throw error;
+  }
+
+  // 🔄 Update status
+  return prisma.maintenance.update({
+    where: { id: Number(maintenanceId) },
+    data: {
+      status: newStatus,
+      resolvedBy:
+        newStatus === 'RESOLVED' ? adminUser.id : null,
+    },
   });
 };
