@@ -20,11 +20,12 @@ exports.reportMaintenanceIssue = async (user, { bicycleId, description, photoUrl
   }
 
   // Create maintenance issue
-  const issue = await prisma.maintenanceIssue.create({
+  const issue = await prisma.maintenance.create({
     data: {
       bicycleId,
-      reportedBy: user.id,
+      userId: user.userId,
       description,
+      status:"OPEN",
       photoUrl,
     },
   });
