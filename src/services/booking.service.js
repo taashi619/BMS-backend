@@ -38,6 +38,45 @@ exports.createBooking = async (user, data) => {
         booking,
     };
 };
+// bookingService.js
+exports.cancelBooking = async (user, bookingId) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { bicycle: true },
+  });
+
+  if (!booking) {
+    const error = new Error("Booking not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (booking.userId !== user.userId) {
+    const error = new Error("You can only cancel your own bookings");
+    error.status = 403;
+    throw error;
+  }
+
+  if (booking.bicycle.status !== "BOOKED" || booking.keyTaken) {
+    const error = new Error("Booking cannot be cancelled at this stage");
+    error.status = 400;
+    throw error;
+  }
+
+  // Update booking status
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "CANCELLED" },
+  });
+
+  // Update bicycle status to AVAILABLE
+  await prisma.bicycle.update({
+    where: { id: booking.bicycleId },
+    data: { status: "AVAILABLE" },
+  });
+
+  return { message: "Booking cancelled successfully" };
+};
 
 exports.getMyBookings = async (user) => {
     return prisma.booking.findMany({

@@ -12,4 +12,6 @@ router.get("/my", auth, bookingController.getMyBookings);
 // RETURN BICYCLE
 router.patch("/:id/return", auth, bookingController.returnBicycle);
 
+router.patch("/:id/cancel", auth, bookingController.cancelBooking);
+
 module.exports = router;

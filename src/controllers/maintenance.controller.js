@@ -1,5 +1,5 @@
 const maintenanceService = require('../services/maintenance.service');
-const s3Service = require("../services/s3.service");
+const s3Service = require("../services/s3Maintence.service");
 
 exports.reportIssue = async (req, res) => {
   try {
