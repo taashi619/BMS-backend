@@ -74,3 +74,32 @@ exports.login = async ({ email, password }) => {
     role: user.role,
   };
 };
+
+exports.changePassword = async (userFromToken, { currentPassword, newPassword }) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userFromToken.userId },
+  });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.status = 404;
+    throw error;
+  }
+
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isPasswordValid) {
+    const error = new Error("Current password is incorrect");
+    error.status = 400;
+    throw error;
+  }
+
+  const SALT_ROUNDS = 10;
+  const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashed },
+  });
+
+  return { message: "Password changed successfully" };
+};

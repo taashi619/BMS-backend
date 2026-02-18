@@ -8,7 +8,18 @@ exports.createBooking = async (user, data) => {
         error.status = 403;
         throw error;
     }
-
+    const existingActive = await prisma.booking.findFirst({
+        where: {
+            userId: user.userId,
+            status: { in: ["BOOKED", "KEY_TAKEN"] },
+            actualReturnTime: null,
+        },
+    });
+    if (existingActive) {
+    const error = new Error("You already have an active booking");
+    error.status = 400;
+    throw error;
+  }
     const bicycle = await prisma.bicycle.findUnique({
         where: { id: bicycleId },
     });
@@ -40,42 +51,42 @@ exports.createBooking = async (user, data) => {
 };
 // bookingService.js
 exports.cancelBooking = async (user, bookingId) => {
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: { bicycle: true },
-  });
+    const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: { bicycle: true },
+    });
 
-  if (!booking) {
-    const error = new Error("Booking not found");
-    error.status = 404;
-    throw error;
-  }
+    if (!booking) {
+        const error = new Error("Booking not found");
+        error.status = 404;
+        throw error;
+    }
 
-  if (booking.userId !== user.userId) {
-    const error = new Error("You can only cancel your own bookings");
-    error.status = 403;
-    throw error;
-  }
+    if (booking.userId !== user.userId) {
+        const error = new Error("You can only cancel your own bookings");
+        error.status = 403;
+        throw error;
+    }
 
-  if (booking.bicycle.status !== "BOOKED" || booking.keyTaken) {
-    const error = new Error("Booking cannot be cancelled at this stage");
-    error.status = 400;
-    throw error;
-  }
+    if (booking.bicycle.status !== "BOOKED" || booking.keyTaken) {
+        const error = new Error("Booking cannot be cancelled at this stage");
+        error.status = 400;
+        throw error;
+    }
 
-  // Update booking status
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "CANCELLED" },
-  });
+    // Update booking status
+    await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "CANCELLED" },
+    });
 
-  // Update bicycle status to AVAILABLE
-  await prisma.bicycle.update({
-    where: { id: booking.bicycleId },
-    data: { status: "AVAILABLE" },
-  });
+    // Update bicycle status to AVAILABLE
+    await prisma.bicycle.update({
+        where: { id: booking.bicycleId },
+        data: { status: "AVAILABLE" },
+    });
 
-  return { message: "Booking cancelled successfully" };
+    return { message: "Booking cancelled successfully" };
 };
 
 exports.getMyBookings = async (user) => {
@@ -133,7 +144,7 @@ exports.getAllBookings = async (user, filters = {}) => {
 
     adminOnly(user);
 
-    const { bicycleId, studentName, studentEmail, status,bicycleNum } = filters;
+    const { bicycleId, studentName, studentEmail, status, bicycleNum } = filters;
 
     return prisma.booking.findMany({
         where: {
@@ -148,13 +159,13 @@ exports.getAllBookings = async (user, filters = {}) => {
                     ],
                 }),
             },
-            bicycle:{
-                ...(bicycleNum && {bicycleNumber:{contains:bicycleNum, mode: 'insensitive' }})
+            bicycle: {
+                ...(bicycleNum && { bicycleNumber: { contains: bicycleNum, mode: 'insensitive' } })
             }
         },
         include: {
-            user: true,     
-            bicycle: true,  
+            user: true,
+            bicycle: true,
         },
         orderBy: {
             createdAt: 'desc',
@@ -164,45 +175,45 @@ exports.getAllBookings = async (user, filters = {}) => {
 
 
 exports.createBicycle = async (user, data) => {
-  adminOnly(user);
+    adminOnly(user);
 
-  return prisma.bicycle.create({
-    data: {
-      bicycleNumber: data.bicycleNumber,
-    },
-  });
+    return prisma.bicycle.create({
+        data: {
+            bicycleNumber: data.bicycleNumber,
+        },
+    });
 };
 
 exports.updateBicycle = async (user, id, data) => {
-  adminOnly(user);
+    adminOnly(user);
 
-  return prisma.bicycle.update({
-    where: { id: Number(id) },
-    data: {
-      bicycleNumber: data.bicycleNumber,
-      lastMaintenanceDate: data.lastMaintenanceDate,
-    },
-  });
+    return prisma.bicycle.update({
+        where: { id: Number(id) },
+        data: {
+            bicycleNumber: data.bicycleNumber,
+            lastMaintenanceDate: data.lastMaintenanceDate,
+        },
+    });
 };
 
 exports.updateBicycleStatus = async (user, id, status) => {
-  adminOnly(user);
+    adminOnly(user);
 
-  return prisma.bicycle.update({
-    where: { id: Number(id) },
-    data: {
-      status,
-    },
-  });
+    return prisma.bicycle.update({
+        where: { id: Number(id) },
+        data: {
+            status,
+        },
+    });
 };
 
 exports.deactivateBicycle = async (user, id) => {
-  adminOnly(user);
+    adminOnly(user);
 
-  return prisma.bicycle.update({
-    where: { id: Number(id) },
-    data: {
-      isActive: false,
-    },
-  });
+    return prisma.bicycle.update({
+        where: { id: Number(id) },
+        data: {
+            isActive: false,
+        },
+    });
 };

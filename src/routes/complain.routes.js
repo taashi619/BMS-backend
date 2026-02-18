@@ -14,5 +14,6 @@ router.patch(
     complainController.updateComplaintStatus
 );
 
+router.get("/my", authMiddleware, complaintController.getMyComplaints);
 
 module.exports = router;

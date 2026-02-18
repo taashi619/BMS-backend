@@ -16,5 +16,11 @@ router.patch(
   auth,
   adminBookingController.approveReturn
 );
+router.post(
+  "/add/student",
+  auth,
+  adminBookingController.createStudentByAdmin
+);
+router.get("/me/total-fine", authMiddleware, adminBookingController.getMyTotalFine);
 
 module.exports = router;
