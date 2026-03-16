@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const bookingController = require("../controllers/booking.controller");
-
+const adminBookingController = require("../controllers/admin.booking.controller");
 // CREATE BOOKING
 router.post("/", auth, bookingController.createBooking);
 
@@ -14,4 +14,5 @@ router.patch("/:id/return", auth, bookingController.returnBicycle);
 
 router.patch("/:id/cancel", auth, bookingController.cancelBooking);
 
+router.get("/my/total-fine", auth, adminBookingController.getMyTotalFine);
 module.exports = router;

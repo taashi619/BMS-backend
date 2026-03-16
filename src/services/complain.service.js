@@ -45,3 +45,21 @@ exports.updateComplaintStatus = async (admin, complaintId, status) => {
     },
   });
 };
+
+exports.getMyComplaints = async (user) => {
+  if (user.role !== "STUDENT") {
+    throw Object.assign(new Error("Access denied"), { status: 403 });
+  }
+
+  return prisma.complaint.findMany({
+    where: {
+      userId: user.userId,
+    },
+    include: {
+      admin: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};

@@ -1,4 +1,6 @@
 const prisma = require("../config/db");
+const bcrypt = require("bcrypt");
+const SALT_ROUNDS = 10;
 
 exports.issueKey = async (user, bookingId) => {
     // ADMIN only
@@ -105,4 +107,70 @@ exports.approveReturn = async (user, bookingId) => {
         message: "Return approved",
         fine,
     };
+};
+exports.createStudentByAdmin = async (adminUser, data) => {
+  if (adminUser.role !== "ADMIN") {
+    const err = new Error("Only admins can create students");
+    err.status = 403;
+    throw err;
+  }
+
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    indexNo,
+    faculty,
+    roomNumber,
+    phone,
+    isResidential,
+  } = data;
+
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const user = await prisma.user.create({
+    data: {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      role: "STUDENT",
+      phone,
+    },
+  });
+
+  const student = await prisma.student.create({
+    data: {
+      userId: user.id,
+      indexNo,
+      faculty,
+      roomNumber,
+      isResidential,
+    },
+  });
+
+  return { user, student };
+};
+exports.getMyTotalFine = async (user) => {
+  if (user.role !== "STUDENT") {
+    const err = new Error("Access denied");
+    err.status = 403;
+    throw err;
+  }
+
+  const student = await prisma.student.findUnique({
+    where: { userId: user.userId },
+    select: { totalFines: true },
+  });
+
+  if (!student) {
+    const err = new Error("Student profile not found");
+    err.status = 404;
+    throw err;
+  }
+
+  return {
+    totalFine: student.totalFines ?? 0,
+  };
 };

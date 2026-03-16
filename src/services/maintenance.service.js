@@ -81,3 +81,23 @@ exports.updateMaintenanceStatus = async (
     },
   });
 };
+exports.getMyMaintenanceHistory = async (user) => {
+  if (user.role !== "STUDENT") {
+    const error = new Error("Access denied");
+    error.status = 403;
+    throw error;
+  }
+
+  const issues = await prisma.maintenance.findMany({
+    where: { userId: user.userId },
+    include: {
+      bicycle: true, // so they see which bike each record is for
+      admin: true,   // who resolved it (if any)
+    },
+    orderBy: {
+      reportedDate: "desc",
+    },
+  });
+
+  return issues;
+};

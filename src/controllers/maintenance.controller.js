@@ -68,3 +68,13 @@ exports.changeMaintenanceStatus = async (req, res, next) => {
     next(error);
   }
 };
+exports.getMyMaintenanceHistory = async (req, res) => {
+  try {
+    const result = await maintenanceService.getMyMaintenanceHistory(req.user);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Internal server error",
+    });
+  }
+};
