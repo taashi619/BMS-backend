@@ -1,5 +1,5 @@
 const prisma = require("../config/db");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
 
 exports.issueKey = async (user, bookingId) => {

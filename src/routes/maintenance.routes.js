@@ -13,7 +13,7 @@ router.patch(
     auth,
     maintenanceController.changeMaintenanceStatus
 );
-router.get("/my", authMiddleware, maintenanceController.getMyMaintenanceHistory);
+router.get("/my", auth, maintenanceController.getMyMaintenanceHistory);
 
 
 module.exports = router;
