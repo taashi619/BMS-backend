@@ -64,3 +64,13 @@ exports.getMyTotalFine = async (req, res) => {
     });
   }
 };
+exports.getOpenAdminBookings = async (req, res) => {
+  try {
+    const result = await adminBookingService.getOpenAdminBookings(req.user);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Failed to fetch open bookings",
+    });
+  }
+};

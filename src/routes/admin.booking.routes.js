@@ -17,6 +17,11 @@ router.patch(
   adminBookingController.approveReturn
 );
 
+router.get(
+  "/open",
+  auth,
+  adminBookingController.getOpenAdminBookings
+);
 
 
 module.exports = router;

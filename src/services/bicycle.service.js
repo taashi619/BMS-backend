@@ -38,12 +38,13 @@ exports.getAllBicycles = async (user) => {
 
 exports.updateBicycle = async (user, id, data) => {
   adminOnly(user);
-
   return prisma.bicycle.update({
     where: { id: Number(id) },
-    data: {
+    data: {      
       bicycleNumber: data.bicycleNumber,
       lastMaintenanceDate: data.lastMaintenanceDate,
+      status:data.status,
+      isActive:data.isActive
     },
   });
 };

@@ -13,11 +13,17 @@ const profileRoutes = require("./src/routes/profile.routes");
 
 
 const app = express();
+
+app.use(cors({
+    origin: "http://localhost:5173", // Vite dev URL
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
 app.use(express.json());
-app.use(cors());
 // test route
 app.get("/", (req, res) => {
-    
+
     res.send("Bicycle Management Backend Running...");
 });
 //register route

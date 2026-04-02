@@ -174,3 +174,33 @@ exports.getMyTotalFine = async (user) => {
     totalFine: student.totalFines ?? 0,
   };
 };
+
+exports.getOpenAdminBookings = async (user) => {
+  // admin only
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
+
+  // bookings where admin still has to act:
+  // - BOOKED  -> need to issue key
+  // - RETURN_PENDING -> need to approve return
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: { in: ["BOOKED", "RETURN_PENDING","KEY_TAKEN","CANCELLED"] },
+    },
+    include: {
+      user: true,
+      bicycle: true,
+    },
+    orderBy: {
+      bookingTime: "desc",
+    },
+  });
+
+  return {
+    success: true,
+    bookings,
+  };
+};
