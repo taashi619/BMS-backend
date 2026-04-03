@@ -23,5 +23,16 @@ router.get(
   adminBookingController.getOpenAdminBookings
 );
 
+router.patch(
+  "/:id/reject",
+  auth,
+  adminBookingController.rejectBooking
+);
+
+router.patch(
+  "/:id/rejapprove",
+  auth,
+  adminBookingController.rejectApprove
+);
 
 module.exports = router;
