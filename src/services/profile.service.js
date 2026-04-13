@@ -17,6 +17,7 @@ exports.getProfile = async (user) => {
             faculty: true,
             roomNumber: true,
             isResidential: true,
+            phone: true,
           },
         },
       },
@@ -33,6 +34,7 @@ exports.getProfile = async (user) => {
         lastName: true,
         email: true,
         role: true,
+        phone:true,
       },
     });
   }
@@ -49,6 +51,7 @@ exports.updateProfile = async (user, updates) => {
     email,
     faculty,
     roomNumber,
+    phone
   } = updates;
 
   // STUDENT UPDATE
@@ -63,6 +66,7 @@ exports.updateProfile = async (user, updates) => {
           update: {
             faculty,
             roomNumber,
+            phone
           },
         },
       },
@@ -80,6 +84,7 @@ exports.updateProfile = async (user, updates) => {
         firstName,
         lastName,
         email,
+        phone
       },
     });
   }
@@ -124,7 +129,7 @@ exports.getAllStudents = async (query) => {
     firstName: s.user.firstName,
     lastName: s.user.lastName,
     email: s.user.email,
-    totalFines: s.totalFines, // Decimal -> string in JSON
+    totalFines: s.totalFines,
     isResidential: s.isResidential,
   }));
 };

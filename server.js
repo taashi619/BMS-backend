@@ -9,7 +9,7 @@ const adminBookingRoutes = require("./src/routes/admin.booking.routes");
 const maintenanceRoutes = require("./src/routes/maintenance.routes");
 const complainRoutes = require("./src/routes/complain.routes");
 const profileRoutes = require("./src/routes/profile.routes");
-
+const auditRoutes = require("./src/routes/audit.routes");
 
 
 const app = express();
@@ -34,6 +34,7 @@ app.use("/booking-confirm", adminBookingRoutes);
 app.use("/maintenance", maintenanceRoutes);
 app.use("/complain", complainRoutes);
 app.use("/profile", profileRoutes);
+app.use("/audit", auditRoutes);
 
 // test DB route
 app.get("/test", async (req, res) => {
