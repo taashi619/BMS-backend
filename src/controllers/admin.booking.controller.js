@@ -64,3 +64,36 @@ exports.getMyTotalFine = async (req, res) => {
     });
   }
 };
+exports.getOpenAdminBookings = async (req, res) => {
+  try {
+    const result = await adminBookingService.getOpenAdminBookings(req.user);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Failed to fetch open bookings",
+    });
+  }
+};
+exports.rejectBooking = async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id, 10);
+    const result = await adminBookingService.rejectBooking(req.user, bookingId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Reject failed",
+    });
+  }
+};
+
+exports.rejectApprove = async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id, 10);
+    const result = await adminBookingService.rejectApprove(req.user, bookingId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Reject failed",
+    });
+  }
+};

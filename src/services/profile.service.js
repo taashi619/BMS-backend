@@ -17,6 +17,7 @@ exports.getProfile = async (user) => {
             faculty: true,
             roomNumber: true,
             isResidential: true,
+            phone: true,
           },
         },
       },
@@ -33,6 +34,7 @@ exports.getProfile = async (user) => {
         lastName: true,
         email: true,
         role: true,
+        phone:true,
       },
     });
   }
@@ -49,6 +51,7 @@ exports.updateProfile = async (user, updates) => {
     email,
     faculty,
     roomNumber,
+    phone
   } = updates;
 
   // STUDENT UPDATE
@@ -63,6 +66,7 @@ exports.updateProfile = async (user, updates) => {
           update: {
             faculty,
             roomNumber,
+            phone
           },
         },
       },
@@ -80,6 +84,7 @@ exports.updateProfile = async (user, updates) => {
         firstName,
         lastName,
         email,
+        phone
       },
     });
   }
@@ -87,4 +92,44 @@ exports.updateProfile = async (user, updates) => {
   const error = new Error("Invalid role");
   error.status = 400;
   throw error;
+};
+
+exports.getAllStudents = async (query) => {
+  const { withFinesOnly, search } = query;
+
+  const whereStudent =
+    withFinesOnly === "true"
+      ? { totalFines: { gt: 0 } }
+      : {};
+
+  const whereUser = search
+    ? {
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  const students = await prisma.student.findMany({
+    where: {
+      ...whereStudent,
+      user: whereUser,
+    },
+    include: { user: true },
+    orderBy: {
+      totalFines: "desc",
+    },
+  });
+
+  return students.map((s) => ({
+    id: s.id,
+    studentId: s.indexNo,
+    firstName: s.user.firstName,
+    lastName: s.user.lastName,
+    email: s.user.email,
+    totalFines: s.totalFines,
+    isResidential: s.isResidential,
+  }));
 };

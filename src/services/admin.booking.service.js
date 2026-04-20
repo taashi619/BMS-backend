@@ -3,111 +3,196 @@ const bcrypt = require("bcrypt");
 const SALT_ROUNDS = 10;
 
 exports.issueKey = async (user, bookingId) => {
-    // ADMIN only
-    if (user.role !== "ADMIN") {
-        const error = new Error("Admin only");
-        error.status = 403;
-        throw error;
-    }
+  // ADMIN only
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
 
-    const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { bicycle: true },
-    });
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { bicycle: true },
+  });
 
-    if (!booking || booking.status !== "BOOKED") {
-        const error = new Error("Invalid booking");
-        error.status = 400;
-        throw error;
-    }
+  if (!booking || booking.status !== "BOOKED") {
+    const error = new Error("Invalid booking");
+    error.status = 400;
+    throw error;
+  }
 
-    // allowed ride time
-    const allowedHours = 12;
-    const returnTime = new Date();
-    returnTime.setHours(returnTime.getHours() + allowedHours);
+  // allowed ride time in minutes, from env
+  const freeMinutes = Number(process.env.FREE_MINUTES ?? 60); // default 60 min
 
-    await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-            status: "KEY_TAKEN",
-            keyTaken: true,
-            returnTime,
-        },
-    });
+  const start = new Date(); 
+  const returnTime = new Date(start.getTime() + freeMinutes * 60 * 1000);
 
-    await prisma.bicycle.update({
-        where: { id: booking.bicycleId },
-        data: { status: "IN_USE" },
-    });
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: "KEY_TAKEN",
+      keyTaken: true,
+      returnTime,
+    },
+  });
 
-    return {
-        message: "Key issued. Ride started.",
-        returnTime,
-    };
+  await prisma.bicycle.update({
+    where: { id: booking.bicycleId },
+    data: { status: "IN_USE" },
+  });
+
+  return {
+    message: "Key issued. Ride started.",
+    returnTime,
+  };
 };
 
 exports.approveReturn = async (user, bookingId) => {
-    if (user.role !== "ADMIN") {
-        const error = new Error("Admin only");
-        error.status = 403;
-        throw error;
-    }
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
 
-    const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { user: true },
-    });
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { user: true },
+  });
 
-    if (!booking || booking.status !== "RETURN_PENDING") {
-        const error = new Error("Return not pending");
-        error.status = 400;
-        throw error;
-    }
+  if (!booking || booking.status !== "RETURN_PENDING") {
+    const error = new Error("Return not pending");
+    error.status = 400;
+    throw error;
+  }
 
-    const finePerHour = parseFloat(process.env.FINE_PER_HOUR) || 1;
-    const freeHours = parseFloat(process.env.FREE_HOURS) || 12;
+  if (!booking.actualReturnTime || !booking.returnTime) {
+    const error = new Error("Missing return times");
+    error.status = 400;
+    throw error;
+  }
 
-    let fine = 0;
+  const finePerMinute = Number(process.env.FINE_PER_MINUTE ?? 0.1);
+  const freeMinutes = Number(process.env.FREE_MINUTES ?? 1);
 
-    if (booking.actualReturnTime > booking.returnTime) {
-        const diffMs = booking.actualReturnTime - booking.returnTime;
-        const diffHours = diffMs / (1000 * 60 * 60);
+  const actual = new Date(booking.actualReturnTime);
+  const planned = new Date(booking.returnTime);
 
-        // Deduct free hours
-        const chargeableHours = Math.max(0, diffHours - freeHours);
+  const diffMs = actual.getTime() - planned.getTime();
+  const diffMinutes = diffMs / (1000 * 60);
 
-        fine = Math.round(chargeableHours * finePerHour * 100) / 100;
-    }
+  const chargeableMinutes = Math.max(0, diffMinutes - freeMinutes);
+  let fine = 0;
 
+  if (chargeableMinutes > 0) {
+    fine = Math.round(chargeableMinutes * finePerMinute * 100) / 100;
+  }
 
+  console.log({
+    actualReturnTime: booking.actualReturnTime,
+    returnTime: booking.returnTime,
+    diffMinutes,
+    chargeableMinutes,
+    finePerMinute,
+    freeMinutes,
+    fine,
+  });
 
-    await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-            status: "APPROVED_RETURN",
-            fineAmount: fine,
-        },
-    });
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: "APPROVED_RETURN",
+      fineAmount: fine,
+    },
+  });
 
-    await prisma.bicycle.update({
-        where: { id: booking.bicycleId },
-        data: { status: "AVAILABLE" },
-    });
+  await prisma.bicycle.update({
+    where: { id: booking.bicycleId },
+    data: { status: "AVAILABLE" },
+  });
 
-    await prisma.student.update({
-        where: { userId: booking.userId },
-        data: {
-            totalFines: {
-                increment: fine,
-            },
-        },
-    });
+  await prisma.student.update({
+    where: { userId: booking.userId },
+    data: {
+      totalFines: {
+        increment: fine,
+      },
+    },
+  });
 
-    return {
-        message: "Return approved",
-        fine,
-    };
+  return {
+    message: "Return approved",
+    fine,
+  };
 };
+
+exports.rejectBooking = async (user, bookingId) => {
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+  });
+
+  if (!booking || booking.status !== "BOOKED") {
+    const error = new Error("Only pending bookings can be rejected");
+    error.status = 400;
+    throw error;
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: "CANCELLED",
+    },
+  });
+
+  await prisma.bicycle.update({
+    where: { id: booking.bicycleId },
+    data: { status: "AVAILABLE" },
+  });
+
+
+  return { message: "Booking rejected" };
+};
+
+exports.rejectApprove = async (user, bookingId) => {
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { user: true },
+  });
+
+  if (!booking || booking.status !== "RETURN_PENDING") {
+    const error = new Error("Return not pending");
+    error.status = 400;
+    throw error;
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: "KEY_TAKEN"
+    },
+  });
+
+  await prisma.bicycle.update({
+    where: { id: booking.bicycleId },
+    data: { status: "IN_USE" },
+  });
+
+  return {
+    message: "Return rejected",
+  };
+};
+
 exports.createStudentByAdmin = async (adminUser, data) => {
   if (adminUser.role !== "ADMIN") {
     const err = new Error("Only admins can create students");
@@ -172,5 +257,35 @@ exports.getMyTotalFine = async (user) => {
 
   return {
     totalFine: student.totalFines ?? 0,
+  };
+};
+
+exports.getOpenAdminBookings = async (user) => {
+  // admin only
+  if (user.role !== "ADMIN") {
+    const error = new Error("Admin only");
+    error.status = 403;
+    throw error;
+  }
+
+  // bookings where admin still has to act:
+  // - BOOKED  -> need to issue key
+  // - RETURN_PENDING -> need to approve return
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: { in: ["BOOKED", "RETURN_PENDING", "KEY_TAKEN", "CANCELLED","APPROVED_RETURN"] },
+    },
+    include: {
+      user: true,
+      bicycle: true,
+    },
+    orderBy: {
+      bookingTime: "desc",
+    },
+  });
+
+  return {
+    success: true,
+    bookings,
   };
 };

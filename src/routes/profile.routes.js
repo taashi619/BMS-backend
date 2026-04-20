@@ -13,5 +13,5 @@ router.post(
   auth,
   adminBookingController.createStudentByAdmin
 );
-
+router.get("/students", auth, controller.getAllStudents);
 module.exports = router;        

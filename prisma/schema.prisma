@@ -210,6 +210,8 @@ model AuditLog {
   actionType AuditAction
   reason     String?
   timestamp  DateTime    @default(now())
+  previousFineAmount Decimal?  
+  newFineAmount      Decimal?
 
   booking Booking @relation(fields: [bookingId], references: [id])
   admin   Admin   @relation("AdminAuditLogs", fields: [adminId], references: [id])

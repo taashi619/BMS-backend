@@ -34,3 +34,25 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+exports.getAllStudents = async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can view students",
+      });
+    }
+
+    const students = await profileService.getAllStudents(req.query);
+
+    res.json({
+      success: true,
+      students,
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({
+      success: false,
+      message: err.message || "Failed to load students",
+    });
+  }
+};
