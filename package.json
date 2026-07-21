@@ -1,9 +1,18 @@
 {
   "name": "bms",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "node server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:students": "node scripts/seedStudents.js",
+    "seed:bicycles": "node scripts/seedBicycles.js",
+    "seed:all": "npm run seed:admin && npm run seed:students && npm run seed:bicycles",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
