@@ -268,9 +268,7 @@ exports.getOpenAdminBookings = async (user) => {
     throw error;
   }
 
-  // bookings where admin still has to act:
-  // - BOOKED  -> need to issue key
-  // - RETURN_PENDING -> need to approve return
+
   const bookings = await prisma.booking.findMany({
     where: {
       status: { in: ["BOOKED", "RETURN_PENDING", "KEY_TAKEN", "CANCELLED","APPROVED_RETURN"] },

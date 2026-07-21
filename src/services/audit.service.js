@@ -63,7 +63,6 @@ exports.adjustFine = async (user, bookingId, newFineAmount, reason) => {
     data: { totalFines: newTotalFines },
   });
 
-  // create audit log with previous/new fine
   await prisma.auditLog.create({
     data: {
       bookingId: Number(bookingId),
@@ -128,8 +127,6 @@ exports.listAuditLogs = async (user, options = {}) => {
 
       // current fine after this action (from booking)
       fineAmount: log.booking.fineAmount,
-
-      // new fields from AuditLog table
       previousFineAmount: log.previousFineAmount,
       newFineAmount: log.newFineAmount,
     };

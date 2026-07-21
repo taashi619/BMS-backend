@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 const prisma = require("./src/config/db");
 const authRoutes = require("./src/routes/auth.routes");
@@ -11,22 +12,21 @@ const complainRoutes = require("./src/routes/complain.routes");
 const profileRoutes = require("./src/routes/profile.routes");
 const auditRoutes = require("./src/routes/audit.routes");
 
-
 const app = express();
 
 app.use(cors({
-    origin: "http://localhost:5173", // Vite dev URL
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.json());
-// test route
-app.get("/", (req, res) => {
 
-    res.send("Bicycle Management Backend Running...");
+app.get("/", (req, res) => {
+  res.send("Bicycle Management Backend Running...");
 });
-//register route
+
 app.use("/auth", authRoutes);
 app.use("/bicycles", bicycleRoutes);
 app.use("/bookings", bookingRoutes);
@@ -36,13 +36,11 @@ app.use("/complain", complainRoutes);
 app.use("/profile", profileRoutes);
 app.use("/audit", auditRoutes);
 
-// test DB route
 app.get("/test", async (req, res) => {
-    const users = await prisma.user.findMany();
-    res.json(users);
+  const users = await prisma.user.findMany();
+  res.json(users);
 });
 
-
 app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+  console.log(`Server running on port ${process.env.PORT}`);
 });
