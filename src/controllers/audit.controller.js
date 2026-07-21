@@ -1,4 +1,3 @@
-// audit.controller.js
 const auditService = require("../services/audit.service");
 
 exports.adjustFine = async (req, res, next) => {

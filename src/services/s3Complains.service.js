@@ -1,23 +1,23 @@
-const { PutObjectCommand } = require("@aws-sdk/client-s3");
+// const fs = require("fs");
+const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-const s3 = require("../config/s3");
 
 exports.uploadToS3 = async (file) => {
   try {
-    const key = `complaints/${Date.now()}-${uuidv4()}-${file.originalname}`;
+    const uploadsDir = path.join(__dirname, "..", "..", "uploads", "complaints");
 
-    const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    });
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
 
-    await s3.send(command);
+    const safeFileName = `${Date.now()}-${uuidv4()}-${file.originalname.replace(/\s+/g, "-")}`;
+    const filePath = path.join(uploadsDir, safeFileName);
 
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    fs.writeFileSync(filePath, file.buffer);
+
+    return `${process.env.BASE_URL || "http://localhost:5000"}/uploads/complaints/${safeFileName}`;
   } catch (error) {
-    console.error("S3 Upload Error:", error);
+    console.error("Local Upload Error:", error);
     throw new Error("Failed to upload file");
   }
 };
